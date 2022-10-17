@@ -1,0 +1,98 @@
+---
+title: "ANA 515 Assignment 4 Data Analytics Project"
+author: "Mohammed Sohail Ameer"
+date: "2022-10-15"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Business Goal
+
+Business problem or goal is a essential part of a business dataset analysis. Here we are utilized Uber's data where we are finding the goals or problems in it. Here the goal is to find out the frequency of a customer travelled in Uber and what type of service they are willing to avail. Again to achieve a good service and customer reputation, the cancelled and completed trips are also analysed with their fare, distance, ride time etc.
+
+## Dataset Retrieval
+
+This Uber's data is retrieved from the following link:
+
+https://drive.google.com/file/d/1emopjfEkTt59jJoBH9L9bSdmlDC4AR87/view
+
+## Intializing required libraries
+
+```{r}
+library(ggplot2)
+library(ggthemes)
+library(lubridate)
+library(dplyr)
+library(tidyr)
+library(DT)
+library(scales)
+library(Hmisc)
+```
+
+## Loading Data
+
+```{r}
+apr_data <- read.csv("Uber/uber-raw-data-apr14.csv")
+may_data <- read.csv("Uber/uber-raw-data-may14.csv")
+jun_data <- read.csv("Uber/uber-raw-data-jun14.csv")
+jul_data <- read.csv("Uber/uber-raw-data-jul14.csv")
+aug_data <- read.csv("Uber/uber-raw-data-aug14.csv")
+sep_data <- read.csv("Uber/uber-raw-data-sep14.csv")
+
+data_2014 <- rbind(apr_data,may_data, jun_data, jul_data, aug_data, sep_data)
+```
+
+## Describing Data
+
+```{r}
+describe((data_2014))
+```
+## Data Preparation
+
+```{r}
+data_2014$Date.Time <- as.POSIXct(data_2014$Date.Time, format = "%m/%d/%Y %H:%M:%S")
+data_2014$Time <- format(as.POSIXct(data_2014$Date.Time, format = "%m/%d/%Y %H:%M:%S"), format="%H:%M:%S")
+data_2014$Date.Time <- ymd_hms(data_2014$Date.Time)
+data_2014$day <- factor(day(data_2014$Date.Time))
+data_2014$month <- factor(month(data_2014$Date.Time, label = TRUE))
+data_2014$year <- factor(year(data_2014$Date.Time))
+data_2014$dayofweek <- factor(wday(data_2014$Date.Time, label = TRUE))
+data_2014$hour <- factor(hour(hms(data_2014$Time)))
+data_2014$minute <- factor(minute(hms(data_2014$Time)))
+data_2014$second <- factor(second(hms(data_2014$Time)))
+```
+
+## Data Visualization
+
+Here a bar plot has been developed with Trips by Hour and Month. 
+
+```{r}
+hour_data <- data_2014 %>%
+           group_by(hour) %>%
+               dplyr::summarize(Total = n()) 
+month_hour <- data_2014 %>%
+          group_by(month, hour) %>%
+             dplyr::summarize(Total = n())
+ggplot(month_hour, aes(hour, Total, fill = month)) + 
+       geom_bar( stat = "identity") +
+          ggtitle("Trips by Hour and Month") +
+           scale_y_continuous(labels = comma)
+```
+## Data Visualization
+
+Here a heat map plot has been developed with Heat Map by Hour and Day.
+
+```{r}
+day_and_hour <- data_2014 %>%
+         group_by(day, hour) %>%
+            dplyr::summarize(Total = n())
+ggplot(day_and_hour, aes(day, hour, fill = Total)) +
+            geom_tile(color = "black") +
+              ggtitle("Heat Map by Hour and Day")
+```
+
